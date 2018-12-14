@@ -205,7 +205,7 @@ Source repository address | Release Download
 - [Gitter](https://gitter.im/xuxueli/xxl-job)
 
 ### 1.5 Environment
-- JDK：1.7+
+- JDK：1.8+
 - Servlet/JSP Spec：3.1/2.3
 - Tomcat：8.5.x/Jetty9.2.x
 - Spring-boot：1.5.x/Spring4.x

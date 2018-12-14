@@ -3,6 +3,7 @@ package com.xxl.job.executor.service.jobhandler;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.handler.IJobHandler;
 import com.xxl.job.core.handler.annotation.JobHandler;
+import com.xxl.job.core.handler.annotation.JobHandlerRegistry;
 import com.xxl.job.core.log.XxlJobLogger;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  * @author xuxueli 2015-12-19 19:43:36
  */
 @JobHandler(value="demoJobHandler")
+@JobHandlerRegistry(cron = "0 */1 * * * ?", desc = "Demo Update", author = "lay", email = "guanlei@geeweb.cn")
 @Component
 public class DemoJobHandler extends IJobHandler {
 
