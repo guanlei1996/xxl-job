@@ -157,6 +157,7 @@ public class AdminBizImpl implements AdminBiz {
         xxlJobInfo.setExecutorTimeout(handlerRegistryParam.getExecutorTimeout());
         xxlJobInfo.setExecutorFailRetryCount(handlerRegistryParam.getExecutorFailRetryCount());
         xxlJobInfo.setGlueType(handlerRegistryParam.getGlueType());
+        xxlJobInfo.setGlueUpdatetime(new Date());
         Map<String, XxlJobInfo> xxlJobsInGroup = xxlJobInfoDao.getJobsByGroup(jobGroup.getId())
                 .stream().collect(Collectors.toMap(XxlJobInfo::getExecutorHandler, temp -> temp));
 
