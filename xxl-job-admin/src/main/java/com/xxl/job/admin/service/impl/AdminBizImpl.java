@@ -1,15 +1,18 @@
 package com.xxl.job.admin.service.impl;
 
+import com.xxl.job.admin.core.model.XxlJobGroup;
 import com.xxl.job.admin.core.model.XxlJobInfo;
 import com.xxl.job.admin.core.model.XxlJobLog;
 import com.xxl.job.admin.core.thread.JobTriggerPoolHelper;
 import com.xxl.job.admin.core.trigger.TriggerTypeEnum;
 import com.xxl.job.admin.core.util.I18nUtil;
+import com.xxl.job.admin.dao.XxlJobGroupDao;
 import com.xxl.job.admin.dao.XxlJobInfoDao;
 import com.xxl.job.admin.dao.XxlJobLogDao;
 import com.xxl.job.admin.dao.XxlJobRegistryDao;
 import com.xxl.job.core.biz.AdminBiz;
 import com.xxl.job.core.biz.model.HandleCallbackParam;
+import com.xxl.job.core.biz.model.HandlerRegistryParam;
 import com.xxl.job.core.biz.model.RegistryParam;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.handler.IJobHandler;
@@ -22,6 +25,8 @@ import javax.annotation.Resource;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author xuxueli 2017-07-27 21:54:20
@@ -36,6 +41,8 @@ public class AdminBizImpl implements AdminBiz {
     private XxlJobInfoDao xxlJobInfoDao;
     @Resource
     private XxlJobRegistryDao xxlJobRegistryDao;
+    @Resource
+    private XxlJobGroupDao xxlJobGroupDao;
 
 
     @Override
@@ -125,6 +132,48 @@ public class AdminBizImpl implements AdminBiz {
     @Override
     public ReturnT<String> registryRemove(RegistryParam registryParam) {
         xxlJobRegistryDao.registryDelete(registryParam.getRegistGroup(), registryParam.getRegistryKey(), registryParam.getRegistryValue());
+        return ReturnT.SUCCESS;
+    }
+
+    @Override
+    public ReturnT<String> registryHandler(HandlerRegistryParam handlerRegistryParam) {
+        String jobGroupName = handlerRegistryParam.getExecutor();
+        List<XxlJobGroup> xxlJobGroups = xxlJobGroupDao.findAll();
+        Map<String, XxlJobGroup> xxlJobGroupMap = xxlJobGroups.stream().collect(Collectors.toMap(XxlJobGroup::getAppName, xxlJobGroup -> xxlJobGroup));
+        XxlJobGroup jobGroup = xxlJobGroupMap.get(jobGroupName);
+        if (jobGroup == null) {
+            return new ReturnT<>(ReturnT.FAIL_CODE, String.format(">>>>>>>>> registryHandler fail. %s not exists.", jobGroupName));
+        }
+        XxlJobInfo xxlJobInfo = new XxlJobInfo();
+        xxlJobInfo.setJobGroup(jobGroup.getId());
+
+        xxlJobInfo.setJobCron(handlerRegistryParam.getJobCron());
+        xxlJobInfo.setJobDesc(handlerRegistryParam.getJobDesc());
+        xxlJobInfo.setAuthor(handlerRegistryParam.getAuthor());
+        xxlJobInfo.setAlarmEmail(handlerRegistryParam.getAlarmEmail());
+        xxlJobInfo.setExecutorRouteStrategy(handlerRegistryParam.getExecutorRouteStrategy());
+        xxlJobInfo.setExecutorHandler(handlerRegistryParam.getExecutorHandler());
+        xxlJobInfo.setExecutorBlockStrategy(handlerRegistryParam.getExecutorBlockStrategy());
+        xxlJobInfo.setExecutorTimeout(handlerRegistryParam.getExecutorTimeout());
+        xxlJobInfo.setExecutorFailRetryCount(handlerRegistryParam.getExecutorFailRetryCount());
+        xxlJobInfo.setGlueType(handlerRegistryParam.getGlueType());
+        Map<String, XxlJobInfo> xxlJobsInGroup = xxlJobInfoDao.getJobsByGroup(jobGroup.getId())
+                .stream().collect(Collectors.toMap(XxlJobInfo::getExecutorHandler, temp -> temp));
+
+        XxlJobInfo origin = xxlJobsInGroup.get(xxlJobInfo.getExecutorHandler());
+        if (origin != null && StringUtils.isBlank(origin.getExecutorParam())) {
+            xxlJobInfo.setId(xxlJobsInGroup.get(xxlJobInfo.getExecutorHandler()).getId());
+            xxlJobInfoDao.update(xxlJobInfo);
+        } else {
+            xxlJobInfoDao.save(xxlJobInfo);
+        }
+
+        return ReturnT.SUCCESS;
+    }
+
+    @Override
+    public ReturnT<String> registryHandler(List<HandlerRegistryParam> handlerRegistryParams) {
+        handlerRegistryParams.forEach(this::registryHandler);
         return ReturnT.SUCCESS;
     }
 
